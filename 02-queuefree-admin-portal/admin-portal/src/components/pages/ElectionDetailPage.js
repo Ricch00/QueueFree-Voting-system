@@ -13,13 +13,13 @@ export default function ElectionDetailPage() {
   const [showPos, setShowPos] = useState(false);
   const [showCand, setShowCand] = useState(false);
 
-  const load = async () => {
+  const load = React.useCallback(async () => {
     try {
       const [eRes, cRes] = await Promise.all([getElection(id), getCandidates({ election_id: id })]);
       setElection(eRes.data); setCandidates(cRes.data);
     } catch { toast.error('Failed to load'); } finally { setLoading(false); }
-  };
-  useEffect(() => { load(); }, [id]);
+  }, [id]);
+  useEffect(() => { load(); }, [load]);
 
   const handleApprove = async (cId, status) => {
     try { await approveCandidate(cId, { status }); toast.success(`Candidate ${status}`); load(); }

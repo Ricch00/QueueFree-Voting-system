@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { LayoutDashboard, Vote, Users, UserCheck, Activity, BarChart3, ScrollText, Settings, LogOut, Bell, Shield } from 'lucide-react';
+import { LayoutDashboard, Vote, Users, UserCheck, ScrollText, Settings, LogOut, Bell, Shield } from 'lucide-react';
 
 const NAV = [
   { section: 'Main' },

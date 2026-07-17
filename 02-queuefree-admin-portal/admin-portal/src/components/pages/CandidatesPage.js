@@ -6,7 +6,6 @@ import toast from 'react-hot-toast';
 import { ArrowLeft, CheckCircle, XCircle, Download, Trophy, Activity } from 'lucide-react';
 import { Line } from 'react-chartjs-2';
 import { Chart as ChartJS, CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler } from 'chart.js';
-import { formatDistanceToNow } from 'date-fns';
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Tooltip, Filler);
 
 // ── CANDIDATES ─────────────────────────────────────────────────────────────
@@ -15,8 +14,14 @@ export function CandidatesPage() {
   const [loading, setLoading] = useState(true);
   const [filters, setFilters] = useState({ status: '' });
 
-  const load = () => getCandidates(filters).then(r => { setCandidates(r.data); setLoading(false); }).catch(() => setLoading(false));
-  useEffect(() => { load(); }, [filters]);
+const load = React.useCallback(() => {
+    getCandidates(filters)
+        .then(r => {
+            setCandidates(r.data);
+            setLoading(false);
+        })
+        .catch(() => setLoading(false));
+}, [filters]);
 
   const handleApprove = async (id, status) => {
     try { await approveCandidate(id, { status }); toast.success(`Candidate ${status}`); load(); }
@@ -169,7 +174,7 @@ export function AuditLogsPage() {
   const [pagination, setPagination] = useState({});
 
   const load = () => getAuditLogs(filters).then(r => { setLogs(r.data); setPagination(r.pagination); setLoading(false); }).catch(() => setLoading(false));
-  useEffect(() => { load(); }, [filters]);
+  useEffect(() => { load(); }, [load]);
 
   const ACTION_COLOR = { LOGIN: 'badge-success', LOGIN_FAILED: 'badge-danger', CAST_VOTE: 'badge-primary', REGISTER: 'badge-info' };
 
