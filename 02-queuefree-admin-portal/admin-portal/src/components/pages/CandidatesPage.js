@@ -22,6 +22,9 @@ const load = useCallback(() => {
     })
     .catch(() => setLoading(false));
 }, [filters]);
+useEffect(() => {
+  load();
+}, [load]);
   const handleApprove = async (id, status) => {
     try { await approveCandidate(id, { status }); toast.success(`Candidate ${status}`); load(); }
     catch (err) { toast.error(err.message); }
