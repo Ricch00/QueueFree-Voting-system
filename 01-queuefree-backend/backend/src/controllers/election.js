@@ -5,11 +5,11 @@ const { auditLog } = require('../middleware/audit');
 // ── ADMIN ──────────────────────────────────────────────────────────────────
 const createElection = async (req, res) => {
   try {
-    const { title, description, academic_year, semester, start_date, end_date, allow_all_students } = req.body;
+    const { title, description, academic_year, semester, start_date, end_date, allow_all_students, eligible_halls, eligible_departments, eligible_faculties, eligible_programs, eligible_levels } = req.body;
     if (!title || !academic_year || !start_date || !end_date) return res.status(400).json({ success: false, message: 'title, academic_year, start_date and end_date are required' });
     const [r] = await pool.query(
-      'INSERT INTO elections (title, description, academic_year, semester, start_date, end_date, allow_all_students, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
-      [title, description || null, academic_year, semester || 'first', start_date, end_date, allow_all_students !== false ? 1 : 0, req.admin.id]
+      'INSERT INTO elections (title, description, academic_year, semester, start_date, end_date, allow_all_students, eligible_halls, eligible_departments, eligible_faculties, eligible_programs, eligible_levels, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [title, description || null, academic_year, semester || 'first', start_date, end_date, allow_all_students !== false ? 1 : 0, eligible_halls ? JSON.stringify(eligible_halls) : null, eligible_departments ? JSON.stringify(eligible_departments) : null, eligible_faculties ? JSON.stringify(eligible_faculties) : null, eligible_programs ? JSON.stringify(eligible_programs) : null, eligible_levels ? JSON.stringify(eligible_levels) : null, req.admin.id]
     );
     await auditLog({ actorType: 'admin', actorId: req.admin.id, actorEmail: req.admin.email, action: 'CREATE_ELECTION', resourceType: 'election', resourceId: r.insertId, req });
     res.status(201).json({ success: true, message: 'Election created', data: { id: r.insertId } });
@@ -39,12 +39,12 @@ const getElectionById = async (req, res) => {
 
 const updateElection = async (req, res) => {
   try {
-    const { title, description, academic_year, semester, start_date, end_date } = req.body;
+    const { title, description, academic_year, semester, start_date, end_date, allow_all_students, eligible_halls, eligible_departments, eligible_faculties, eligible_programs, eligible_levels } = req.body;
     const [ex] = await pool.query('SELECT status FROM elections WHERE id = ?', [req.params.id]);
     if (!ex.length) return res.status(404).json({ success: false, message: 'Not found' });
     if (['active', 'closed'].includes(ex[0].status)) return res.status(400).json({ success: false, message: 'Cannot edit active or closed election' });
-    await pool.query('UPDATE elections SET title=?, description=?, academic_year=?, semester=?, start_date=?, end_date=? WHERE id=?',
-      [title, description, academic_year, semester, start_date, end_date, req.params.id]);
+    await pool.query('UPDATE elections SET title=?, description=?, academic_year=?, semester=?, start_date=?, end_date=?, allow_all_students=?, eligible_halls=?, eligible_departments=?, eligible_faculties=?, eligible_programs=?, eligible_levels=? WHERE id=?',
+      [title, description, academic_year, semester, start_date, end_date, allow_all_students !== false ? 1 : 0, eligible_halls ? JSON.stringify(eligible_halls) : null, eligible_departments ? JSON.stringify(eligible_departments) : null, eligible_faculties ? JSON.stringify(eligible_faculties) : null, eligible_programs ? JSON.stringify(eligible_programs) : null, eligible_levels ? JSON.stringify(eligible_levels) : null, req.params.id]);
     res.json({ success: true, message: 'Updated' });
   } catch (err) { res.status(500).json({ success: false, message: 'Failed' }); }
 };
@@ -70,11 +70,55 @@ const generateTokens = async (electionId) => {
     const [elections] = await pool.query('SELECT * FROM elections WHERE id = ?', [electionId]);
     if (!elections.length) return;
     const e = elections[0];
+    
+    let whereClause = "WHERE verification_status = 'verified' AND is_active = 1 AND device_fingerprint IS NOT NULL";
+    const params = [];
+    
+    // Apply eligibility filters if not allowing all students
+    if (!e.allow_all_students) {
+      if (e.eligible_halls) {
+        const halls = JSON.parse(e.eligible_halls);
+        if (halls.length > 0) {
+          whereClause += ' AND hall IN (' + halls.map(() => '?').join(',') + ')';
+          params.push(...halls);
+        }
+      }
+      if (e.eligible_departments) {
+        const departments = JSON.parse(e.eligible_departments);
+        if (departments.length > 0) {
+          whereClause += ' AND department IN (' + departments.map(() => '?').join(',') + ')';
+          params.push(...departments);
+        }
+      }
+      if (e.eligible_faculties) {
+        const faculties = JSON.parse(e.eligible_faculties);
+        if (faculties.length > 0) {
+          whereClause += ' AND faculty IN (' + faculties.map(() => '?').join(',') + ')';
+          params.push(...faculties);
+        }
+      }
+      if (e.eligible_programs) {
+        const programs = JSON.parse(e.eligible_programs);
+        if (programs.length > 0) {
+          whereClause += ' AND program IN (' + programs.map(() => '?').join(',') + ')';
+          params.push(...programs);
+        }
+      }
+      if (e.eligible_levels) {
+        const levels = JSON.parse(e.eligible_levels);
+        if (levels.length > 0) {
+          whereClause += ' AND level IN (' + levels.map(() => '?').join(',') + ')';
+          params.push(...levels);
+        }
+      }
+    }
+    
     const [students] = await pool.query(
-      `SELECT id, device_fingerprint FROM students WHERE verification_status = 'verified' AND is_active = 1 AND device_fingerprint IS NOT NULL
+      `SELECT id, device_fingerprint FROM students ${whereClause}
        AND id NOT IN (SELECT student_id FROM voting_tokens WHERE election_id = ?)`,
-      [electionId]
+      [...params, electionId]
     );
+    
     for (const s of students) {
       const token = crypto.randomBytes(32).toString('hex');
       try {

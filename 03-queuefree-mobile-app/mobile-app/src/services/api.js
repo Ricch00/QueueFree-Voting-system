@@ -7,7 +7,7 @@ import * as SecureStore from 'expo-secure-store';
 //  Use the address your phone or emulator can reach.
 //  Example: 'http://10.20.70.147:5000/api'
 // ─────────────────────────────────────────────────────────────────
-const API_BASE = 'http://10.20.70.147:5000/api';
+const API_BASE = 'http://172.20.10.5:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE,

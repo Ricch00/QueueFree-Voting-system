@@ -89,13 +89,26 @@ async function migrate() {
       await conn.query("ALTER TABLE students ADD COLUMN hall VARCHAR(100) AFTER faculty");
     }
     
-    // Check candidates table for photo_url column
-    const [candidateColumns] = await conn.query("SHOW COLUMNS FROM candidates");
-    const candidateColumnNames = candidateColumns.map(c => c.Field);
+    // Add eligibility columns to elections table if they don't exist
+    const [electionColumns] = await conn.query("SHOW COLUMNS FROM elections");
+    const electionColumnNames = electionColumns.map(c => c.Field);
     
-    if (!candidateColumnNames.includes('photo_url')) {
-      await conn.query("ALTER TABLE candidates ADD COLUMN photo_url VARCHAR(255) AFTER nickname");
+    if (!electionColumnNames.includes('eligible_halls')) {
+      await conn.query("ALTER TABLE elections ADD COLUMN eligible_halls TEXT AFTER allow_all_students");
     }
+    if (!electionColumnNames.includes('eligible_departments')) {
+      await conn.query("ALTER TABLE elections ADD COLUMN eligible_departments TEXT AFTER eligible_halls");
+    }
+    if (!electionColumnNames.includes('eligible_faculties')) {
+      await conn.query("ALTER TABLE elections ADD COLUMN eligible_faculties TEXT AFTER eligible_departments");
+    }
+    if (!electionColumnNames.includes('eligible_programs')) {
+      await conn.query("ALTER TABLE elections ADD COLUMN eligible_programs TEXT AFTER eligible_faculties");
+    }
+    if (!electionColumnNames.includes('eligible_levels')) {
+      await conn.query("ALTER TABLE elections ADD COLUMN eligible_levels TEXT AFTER eligible_programs");
+    }
+
 
     await conn.query(`
       CREATE TABLE IF NOT EXISTS elections (
@@ -108,6 +121,11 @@ async function migrate() {
         end_date DATETIME NOT NULL,
         status ENUM('draft','published','active','closed','results_published') DEFAULT 'draft',
         allow_all_students BOOLEAN DEFAULT TRUE,
+        eligible_halls TEXT,
+        eligible_departments TEXT,
+        eligible_faculties TEXT,
+        eligible_programs TEXT,
+        eligible_levels TEXT,
         created_by INT,
         published_at DATETIME,
         closed_at DATETIME,

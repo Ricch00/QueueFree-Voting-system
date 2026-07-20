@@ -81,15 +81,33 @@ export default function ElectionsPage() {
 }
 
 function CreateElectionModal({ onClose, onCreated }) {
-  const [form, setForm] = useState({ title: '', description: '', academic_year: '2024/2025', semester: 'first', start_date: '', end_date: '', allow_all_students: true });
+  const [form, setForm] = useState({ 
+    title: '', description: '', academic_year: '2024/2025', semester: 'first', 
+    start_date: '', end_date: '', allow_all_students: true,
+    eligible_halls: [], eligible_departments: [], eligible_faculties: [], 
+    eligible_programs: [], eligible_levels: []
+  });
   const [loading, setLoading] = useState(false);
   const f = k => e => setForm(p => ({ ...p, [k]: e.target.value }));
+
+  const handleMultiSelect = (field, value) => {
+    setForm(p => ({
+      ...p,
+      [field]: p[field].includes(value) 
+        ? p[field].filter(v => v !== value) 
+        : [...p[field], value]
+    }));
+  };
 
   const handleSubmit = async e => {
     e.preventDefault();
     if (new Date(form.end_date) <= new Date(form.start_date)) return toast.error('End date must be after start date');
     setLoading(true);
-    try { await createElection(form); toast.success('Election created'); onCreated(); }
+    try { 
+      await createElection(form); 
+      toast.success('Election created'); 
+      onCreated(); 
+    }
     catch (err) { toast.error(err.message || 'Failed'); } finally { setLoading(false); }
   };
 
@@ -113,10 +131,73 @@ function CreateElectionModal({ onClose, onCreated }) {
               <div className="form-group"><label className="form-label">Start Date & Time *</label><input type="datetime-local" className="form-control" required value={form.start_date} onChange={f('start_date')} /></div>
               <div className="form-group"><label className="form-label">End Date & Time *</label><input type="datetime-local" className="form-control" required value={form.end_date} onChange={f('end_date')} /></div>
             </div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer' }}>
+            <label style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, cursor: 'pointer', marginBottom: 16 }}>
               <input type="checkbox" checked={form.allow_all_students} onChange={e => setForm(p => ({ ...p, allow_all_students: e.target.checked }))} />
               Allow all verified students to vote
             </label>
+            
+            {!form.allow_all_students && (
+              <div style={{ padding: 16, background: 'var(--gray-50)', borderRadius: 8, border: '1px solid var(--gray-200)' }}>
+                <div style={{ fontWeight: 600, marginBottom: 12, fontSize: 14 }}>Eligibility Criteria</div>
+                
+                <div className="form-group" style={{ marginBottom: 12 }}>
+                  <label className="form-label" style={{ fontSize: 12 }}>Eligible Levels</label>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                    {['100','200','300','400','500','600','postgrad'].map(level => (
+                      <label key={level} style={{ 
+                        display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px', 
+                        borderRadius: 6, fontSize: 12, cursor: 'pointer',
+                        background: form.eligible_levels.includes(level) ? 'var(--primary-light)' : 'var(--gray-100)',
+                        color: form.eligible_levels.includes(level) ? 'var(--primary)' : 'var(--gray-700)'
+                      }}>
+                        <input type="checkbox" checked={form.eligible_levels.includes(level)} onChange={() => handleMultiSelect('eligible_levels', level)} style={{ display: 'none' }} />
+                        {level}
+                      </label>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 12 }}>
+                  <label className="form-label" style={{ fontSize: 12 }}>Eligible Halls</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="Enter halls separated by commas (e.g. Commonwealth, Legon, Mensah Sarbah)"
+                    value={form.eligible_halls.join(', ')}
+                    onChange={e => setForm(p => ({ ...p, eligible_halls: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 12 }}>
+                  <label className="form-label" style={{ fontSize: 12 }}>Eligible Departments</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="Enter departments separated by commas (e.g. Computer Science, Information Technology)"
+                    value={form.eligible_departments.join(', ')}
+                    onChange={e => setForm(p => ({ ...p, eligible_departments: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 12 }}>
+                  <label className="form-label" style={{ fontSize: 12 }}>Eligible Faculties</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="Enter faculties separated by commas (e.g. Science, Engineering, Business)"
+                    value={form.eligible_faculties.join(', ')}
+                    onChange={e => setForm(p => ({ ...p, eligible_faculties: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: 12 }}>Eligible Programs</label>
+                  <input 
+                    className="form-control" 
+                    placeholder="Enter programs separated by commas (e.g. BSc Computer Science, BSc Information Technology)"
+                    value={form.eligible_programs.join(', ')}
+                    onChange={e => setForm(p => ({ ...p, eligible_programs: e.target.value.split(',').map(s => s.trim()).filter(Boolean) }))}
+                  />
+                </div>
+              </div>
+            )}
           </div>
           <div className="modal-footer">
             <button type="button" className="btn btn-outline" onClick={onClose}>Cancel</button>

@@ -10,13 +10,26 @@ const LEVELS = ['100','200','300','400','500','600','postgrad'];
 export default function RegisterScreen({ navigation }) {
   const [step, setStep]     = useState(1);
   const [loading, setLoading] = useState(false);
-  const [form, setForm]     = useState({
-    student_id: '', full_name: '', email: '', phone: '',
-    password: '', confirm_password: '',
-    program: '', level: '100', department: '', faculty: '', hall: '',
-    id_photo: '', selfie: ''
-  });
-  const f = k => v => setForm(p => ({ ...p, [k]: v }));
+  const [studentId, setStudentId] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [program, setProgram] = useState('');
+  const [level, setLevel] = useState('100');
+  const [department, setDepartment] = useState('');
+  const [faculty, setFaculty] = useState('');
+  const [hall, setHall] = useState('');
+  const [idPhoto, setIdPhoto] = useState('');
+  const [selfie, setSelfie] = useState('');
+
+  const form = {
+    student_id: studentId, full_name: fullName, email, phone,
+    password, confirm_password: confirmPassword,
+    program, level, department, faculty, hall,
+    id_photo: idPhoto, selfie
+  };
 
   const pickImage = async (field) => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -35,7 +48,8 @@ export default function RegisterScreen({ navigation }) {
     if (!result.canceled && result.assets?.[0]) {
       const asset = result.assets[0];
       const base64 = `data:${asset.type === 'video' ? 'video/mp4' : 'image/jpeg'};base64,${asset.base64}`;
-      setForm(p => ({ ...p, [field]: base64 }));
+      if (field === 'id_photo') setIdPhoto(base64);
+      if (field === 'selfie') setSelfie(base64);
     }
   };
 
@@ -68,21 +82,6 @@ export default function RegisterScreen({ navigation }) {
     } finally { setLoading(false); }
   };
 
-  const Field = ({ label, field, ...props }) => (
-    <View style={s.field}>
-      <Text style={s.label}>{label}</Text>
-      <TextInput 
-        style={s.input} 
-        placeholderTextColor={colors.gray400} 
-        value={form[field]} 
-        onChangeText={f(field)} 
-        autoCapitalize="none"
-        autoCorrect={false}
-        {...props} 
-      />
-    </View>
-  );
-
   return (
     <KeyboardAvoidingView style={s.root} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <StatusBar barStyle="light-content" backgroundColor={colors.primaryDark} />
@@ -107,47 +106,161 @@ export default function RegisterScreen({ navigation }) {
         <View style={s.card}>
           {step === 1 && <>
             <Text style={s.cardTitle}>Personal Information</Text>
-            <Field label="Student ID *"      field="student_id"  placeholder="e.g. USTED/CS/001"            autoCapitalize="none" />
-            <Field label="Full Name *"       field="full_name"   placeholder="Your full legal name" />
-            <Field label="Email Address *"   field="email"       placeholder="student@ug.edu.gh" keyboardType="email-address" autoCapitalize="none" />
-            <Field label="Phone Number"      field="phone"       placeholder="+233 XX XXX XXXX" keyboardType="phone-pad" />
+            <View style={s.field}>
+              <Text style={s.label}>Student ID *</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={studentId}
+                onChangeText={setStudentId}
+                placeholder="e.g. USTED/CS/001"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={s.field}>
+              <Text style={s.label}>Full Name *</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={fullName}
+                onChangeText={setFullName}
+                placeholder="Your full legal name"
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={s.field}>
+              <Text style={s.label}>Email Address *</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={email}
+                onChangeText={setEmail}
+                placeholder="student@ug.edu.gh"
+                keyboardType="email-address"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={s.field}>
+              <Text style={s.label}>Phone Number</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={phone}
+                onChangeText={setPhone}
+                placeholder="+233 XX XXX XXXX"
+                keyboardType="phone-pad"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
           </>}
 
           {step === 2 && <>
             <Text style={s.cardTitle}>Set Password</Text>
-            <Field label="Password *"         field="password"         placeholder="Min. 8 characters" secureTextEntry />
-            <Field label="Confirm Password *" field="confirm_password" placeholder="Repeat your password" secureTextEntry />
+            <View style={s.field}>
+              <Text style={s.label}>Password *</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={password}
+                onChangeText={setPassword}
+                placeholder="Min. 8 characters"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={s.field}>
+              <Text style={s.label}>Confirm Password *</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={confirmPassword}
+                onChangeText={setConfirmPassword}
+                placeholder="Repeat your password"
+                secureTextEntry
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            </View>
           </>}
 
           {step === 3 && <>
             <Text style={s.cardTitle}>Academic Information</Text>
-            <Field label="Program / Course *" field="program"    placeholder="e.g. Computer Science" />
+            <View style={s.field}>
+              <Text style={s.label}>Program / Course *</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={program}
+                onChangeText={setProgram}
+                placeholder="e.g. Computer Science"
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
             <View style={s.field}>
               <Text style={s.label}>Verification Documents *</Text>
               <Text style={s.helperText}>Upload a clear photo of your student ID and a selfie to verify your identity.</Text>
               <TouchableOpacity style={s.uploadBtn} onPress={() => pickImage('id_photo')}>
-                <Text style={s.uploadBtnText}>{form.id_photo ? 'ID Photo Selected' : 'Upload ID Photo'}</Text>
+                <Text style={s.uploadBtnText}>{idPhoto ? 'ID Photo Selected' : 'Upload ID Photo'}</Text>
               </TouchableOpacity>
-              {form.id_photo ? <Image source={{ uri: form.id_photo }} style={s.previewImage} /> : null}
+              {idPhoto ? <Image source={{ uri: idPhoto }} style={s.previewImage} /> : null}
               <TouchableOpacity style={[s.uploadBtn, { marginTop: 10 }]} onPress={() => pickImage('selfie')}>
-                <Text style={s.uploadBtnText}>{form.selfie ? 'Selfie Selected' : 'Upload Selfie'}</Text>
+                <Text style={s.uploadBtnText}>{selfie ? 'Selfie Selected' : 'Upload Selfie'}</Text>
               </TouchableOpacity>
-              {form.selfie ? <Image source={{ uri: form.selfie }} style={s.previewImage} /> : null}
+              {selfie ? <Image source={{ uri: selfie }} style={s.previewImage} /> : null}
             </View>
             <View style={s.field}>
               <Text style={s.label}>Level *</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {LEVELS.map(l => (
-                  <TouchableOpacity key={l} onPress={() => setForm(p => ({ ...p, level: l }))}
-                    style={[s.levelBtn, form.level === l && s.levelBtnActive]}>
-                    <Text style={[s.levelBtnText, form.level === l && { color: colors.white }]}>{l}</Text>
+                  <TouchableOpacity key={l} onPress={() => setLevel(l)}
+                    style={[s.levelBtn, level === l && s.levelBtnActive]}>
+                    <Text style={[s.levelBtnText, level === l && { color: colors.white }]}>{l}</Text>
                   </TouchableOpacity>
                 ))}
               </View>
             </View>
-            <Field label="Department"    field="department" placeholder="e.g. Computer Science" />
-            <Field label="Faculty/School" field="faculty"   placeholder="e.g. Faculty of Science" />
-            <Field label="Hall of Residence" field="hall"   placeholder="e.g. Commonwealth Hall" />
+            <View style={s.field}>
+              <Text style={s.label}>Department</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={department}
+                onChangeText={setDepartment}
+                placeholder="e.g. Computer Science"
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={s.field}>
+              <Text style={s.label}>Faculty/School</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={faculty}
+                onChangeText={setFaculty}
+                placeholder="e.g. Faculty of Science"
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
+            <View style={s.field}>
+              <Text style={s.label}>Hall of Residence</Text>
+              <TextInput 
+                style={s.input} 
+                placeholderTextColor={colors.gray400} 
+                value={hall}
+                onChangeText={setHall}
+                placeholder="e.g. Commonwealth Hall"
+                autoCapitalize="words"
+                autoCorrect={false}
+              />
+            </View>
           </>}
 
           <View style={{ flexDirection: 'row', gap: 10, marginTop: spacing.md }}>

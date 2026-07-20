@@ -30,9 +30,9 @@ async function seed() {
 
     const sHash = await bcrypt.hash('Student@123', 12);
     const students = [
-      ['UG/CS/001', 'Kwame Asante',  'kwame@ug.edu.gh',  'Computer Science',        '300', 'Comp. Science', 'Science'],
-      ['UG/IT/002', 'Ama Boateng',   'ama@ug.edu.gh',    'Information Technology',  '200', 'Comp. Science', 'Science'],
-      ['UG/BA/003', 'Kofi Mensah',   'kofi@ug.edu.gh',   'Business Administration', '400', 'Management',    'Business'],
+      ['USTED/CS/001', 'Kwame Asante',  'kwame@usted.edu.gh',  'Computer Science',        '300', 'Comp. Science', 'Science'],
+      ['USTED/IT/002', 'Ama Boateng',   'ama@usted.edu.gh',    'Information Technology',  '200', 'Comp. Science', 'Science'],
+      ['USTED/BA/003', 'Kofi Mensah',   'kofi@usted.edu.gh',   'Business Administration', '400', 'Management',    'Business'],
     ];
     for (const [sid, name, email, program, level, dept, faculty] of students) {
       await conn.query(
@@ -45,7 +45,7 @@ async function seed() {
     console.log('\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     console.log('Admin   : admin@queuefree.edu.gh  / Admin@123456');
     console.log('EC      : ec@queuefree.edu.gh     / Electoral@123');
-    console.log('Student : kwame@ug.edu.gh          / Student@123');
+    console.log('Student : kwame@usted.edu.gh          / Student@123');
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
   } catch (err) {
     console.error('❌ Seed error:', err.message);

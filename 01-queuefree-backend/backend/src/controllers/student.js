@@ -3,11 +3,12 @@ const { auditLog } = require('../middleware/audit');
 
 const formatStudent = (student, req) => {
   const formatted = { ...student };
-  // Convert absolute URLs to relative paths for admin portal proxy
-  if (formatted.id_photo_url) {
+  // Keep URLs relative for admin portal proxy to work correctly
+  // If URL is absolute, convert to relative path
+  if (formatted.id_photo_url && formatted.id_photo_url.startsWith('http')) {
     formatted.id_photo_url = formatted.id_photo_url.replace(/^https?:\/\/[^\/]+/, '');
   }
-  if (formatted.selfie_url) {
+  if (formatted.selfie_url && formatted.selfie_url.startsWith('http')) {
     formatted.selfie_url = formatted.selfie_url.replace(/^https?:\/\/[^\/]+/, '');
   }
   return formatted;
