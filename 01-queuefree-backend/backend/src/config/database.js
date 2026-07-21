@@ -1,5 +1,5 @@
 require('dotenv').config();
-const mysql = require('mysql2/promise');
+const { Pool } = require('pg');
 
 // Validate required env vars
 const required = ['DB_HOST', 'DB_USER', 'DB_PASSWORD', 'DB_NAME'];
@@ -16,27 +16,26 @@ if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
   process.exit(1);
 }
 
-const pool = mysql.createPool({
-  host:             process.env.DB_HOST,
-  port:             parseInt(process.env.DB_PORT) || 3306,
-  user:             process.env.DB_USER,
-  password:         process.env.DB_PASSWORD,
-  database:         process.env.DB_NAME,
-  waitForConnections: true,
-  connectionLimit:  10,
-  queueLimit:       0,
-  connectTimeout:   30000,
+const pool = new Pool({
+  host: process.env.DB_HOST,
+  port: parseInt(process.env.DB_PORT) || 5432,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 30000,
 });
 
-pool.getConnection()
+pool.connect()
   .then(conn => {
-    console.log(`✅ MySQL connected to '${process.env.DB_NAME}' on ${process.env.DB_HOST}`);
+    console.log(`✅ PostgreSQL connected to '${process.env.DB_NAME}' on ${process.env.DB_HOST}`);
     conn.release();
   })
   .catch(err => {
-    console.error(`\n❌ MySQL connection failed: ${err.message}`);
+    console.error(`\n❌ PostgreSQL connection failed: ${err.message}`);
     console.error('   Check your .env DB_HOST, DB_USER, DB_PASSWORD, DB_NAME');
-    console.error('   Make sure MySQL is running.\n');
+    console.error('   Make sure PostgreSQL is running.\n');
     process.exit(1);
   });
 
