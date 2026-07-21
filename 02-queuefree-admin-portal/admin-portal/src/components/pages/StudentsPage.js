@@ -162,13 +162,25 @@ export default function StudentsPage() {
               {viewStudent.id_photo_url && (
                 <div style={{ marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: 'var(--gray-500)', fontWeight: 600, marginBottom: 6 }}>Student ID Photo</div>
-                  <img src={viewStudent.id_photo_url} alt="Student ID" style={{ width: '100%', maxHeight: 320, borderRadius: 12, objectFit: 'contain', border: '1px solid var(--gray-200)' }} />
+                  <img 
+                    src={viewStudent.id_photo_url} 
+                    alt="Student ID" 
+                    style={{ width: '100%', maxHeight: 320, borderRadius: 12, objectFit: 'contain', border: '1px solid var(--gray-200)' }}
+                    onError={(e) => { console.error('Failed to load ID photo:', viewStudent.id_photo_url, e); }}
+                    onLoad={() => console.log('ID photo loaded:', viewStudent.id_photo_url)}
+                  />
                 </div>
               )}
               {viewStudent.selfie_url && (
                 <div style={{ marginTop: 18 }}>
                   <div style={{ fontSize: 11, color: 'var(--gray-500)', fontWeight: 600, marginBottom: 6 }}>Submitted Selfie</div>
-                  <img src={viewStudent.selfie_url} alt="Student Selfie" style={{ width: '100%', maxHeight: 320, borderRadius: 12, objectFit: 'contain', border: '1px solid var(--gray-200)' }} />
+                  <img 
+                    src={viewStudent.selfie_url} 
+                    alt="Student Selfie" 
+                    style={{ width: '100%', maxHeight: 320, borderRadius: 12, objectFit: 'contain', border: '1px solid var(--gray-200)' }}
+                    onError={(e) => { console.error('Failed to load selfie:', viewStudent.selfie_url, e); }}
+                    onLoad={() => console.log('Selfie loaded:', viewStudent.selfie_url)}
+                  />
                 </div>
               )}
               {viewStudent.verification_note && (

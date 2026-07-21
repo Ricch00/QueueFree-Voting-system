@@ -31,9 +31,9 @@ const getAllElections = async (req, res) => {
 const getElectionById = async (req, res) => {
   try {
     const elections = await pool.query('SELECT e.*, a.name as created_by_name FROM elections e LEFT JOIN admins a ON e.created_by = a.id WHERE e.id = $1', [req.params.id]);
-    if (!elections.length) return res.status(404).json({ success: false, message: 'Election not found' });
+    if (!elections.rows.length) return res.status(404).json({ success: false, message: 'Election not found' });
     const positions = await pool.query('SELECT p.*, (SELECT COUNT(*) FROM candidates WHERE position_id = p.id AND status=$1) as candidate_count FROM positions p WHERE p.election_id = $2 ORDER BY p.sort_order', ['approved', req.params.id]);
-    res.json({ success: true, data: { ...elections[0], positions } });
+    res.json({ success: true, data: { ...elections.rows[0], positions } });
   } catch (err) { res.status(500).json({ success: false, message: 'Failed' }); }
 };
 
@@ -41,8 +41,8 @@ const updateElection = async (req, res) => {
   try {
     const { title, description, academic_year, semester, start_date, end_date, allow_all_students, eligible_halls, eligible_departments, eligible_faculties, eligible_programs, eligible_levels } = req.body;
     const ex = await pool.query('SELECT status FROM elections WHERE id = $1', [req.params.id]);
-    if (!ex.length) return res.status(404).json({ success: false, message: 'Not found' });
-    if (['active', 'closed'].includes(ex[0].status)) return res.status(400).json({ success: false, message: 'Cannot edit active or closed election' });
+    if (!ex.rows.length) return res.status(404).json({ success: false, message: 'Not found' });
+    if (['active', 'closed'].includes(ex.rows[0].status)) return res.status(400).json({ success: false, message: 'Cannot edit active or closed election' });
     await pool.query('UPDATE elections SET title=$1, description=$2, academic_year=$3, semester=$4, start_date=$5, end_date=$6, allow_all_students=$7, eligible_halls=$8, eligible_departments=$9, eligible_faculties=$10, eligible_programs=$11, eligible_levels=$12 WHERE id=$13',
       [title, description, academic_year, semester, start_date, end_date, allow_all_students !== false ? true : false, eligible_halls ? JSON.stringify(eligible_halls) : null, eligible_departments ? JSON.stringify(eligible_departments) : null, eligible_faculties ? JSON.stringify(eligible_faculties) : null, eligible_programs ? JSON.stringify(eligible_programs) : null, eligible_levels ? JSON.stringify(eligible_levels) : null, req.params.id]);
     res.json({ success: true, message: 'Updated' });
@@ -68,8 +68,8 @@ const updateElectionStatus = async (req, res) => {
 const generateTokens = async (electionId) => {
   try {
     const elections = await pool.query('SELECT * FROM elections WHERE id = $1', [electionId]);
-    if (!elections.length) return;
-    const e = elections[0];
+    if (!elections.rows.length) return;
+    const e = elections.rows[0];
     
     let whereClause = "WHERE verification_status = 'verified' AND is_active = true AND device_fingerprint IS NOT NULL";
     const params = [];
@@ -119,22 +119,22 @@ const generateTokens = async (electionId) => {
       [...params, electionId]
     );
     
-    for (const s of students) {
+    for (const s of students.rows) {
       const token = crypto.randomBytes(32).toString('hex');
       try {
         await pool.query('INSERT INTO voting_tokens (token, student_id, election_id, device_fingerprint, expires_at) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (student_id, election_id) DO NOTHING',
           [token, s.id, electionId, s.device_fingerprint, e.end_date]);
       } catch (_) {}
     }
-    console.log(`✅ Generated ${students.length} tokens for election ${electionId}`);
+    console.log(`✅ Generated ${students.rows.length} tokens for election ${electionId}`);
   } catch (err) { console.error('Token generation error:', err.message); }
 };
 
 const deleteElection = async (req, res) => {
   try {
     const ex = await pool.query('SELECT status FROM elections WHERE id = $1', [req.params.id]);
-    if (!ex.length) return res.status(404).json({ success: false, message: 'Not found' });
-    if (ex[0].status === 'active') return res.status(400).json({ success: false, message: 'Cannot delete active election' });
+    if (!ex.rows.length) return res.status(404).json({ success: false, message: 'Not found' });
+    if (ex.rows[0].status === 'active') return res.status(400).json({ success: false, message: 'Cannot delete active election' });
     await pool.query('DELETE FROM elections WHERE id = $1', [req.params.id]);
     res.json({ success: true, message: 'Deleted' });
   } catch (err) { res.status(500).json({ success: false, message: 'Failed' }); }
@@ -188,14 +188,14 @@ const getStudentElections = async (req, res) => {
 const getElectionCandidates = async (req, res) => {
   try {
     const positions = await pool.query('SELECT * FROM positions WHERE election_id = $1 ORDER BY sort_order', [req.params.id]);
-    for (const pos of positions) {
+    for (const pos of positions.rows) {
       const candidates = await pool.query(
         `SELECT c.id, c.manifesto, c.nickname, s.full_name, s.student_id as student_number, s.program, s.level, s.profile_photo
          FROM candidates c JOIN students s ON c.student_id = s.id
          WHERE c.position_id = $1 AND c.election_id = $2 AND c.status = 'approved' ORDER BY c.sort_order`,
         [pos.id, req.params.id]
       );
-      pos.candidates = candidates;
+      pos.candidates = candidates.rows;
     }
     res.json({ success: true, data: positions });
   } catch (err) { res.status(500).json({ success: false, message: 'Failed' }); }

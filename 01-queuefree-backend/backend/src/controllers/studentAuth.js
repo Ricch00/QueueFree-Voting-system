@@ -7,7 +7,7 @@ const { auditLog } = require('../middleware/audit');
 const { validateRegistrationPayload } = require('./registrationValidation');
 
 const ensureUploadDir = () => {
-  const dir = path.join(__dirname, '../uploads/student_docs');
+  const dir = path.join(__dirname, '../../uploads/student_docs');
   if (!fs.existsSync(dir)) {
     console.log('Creating upload directory:', dir);
     fs.mkdirSync(dir, { recursive: true });
@@ -41,14 +41,14 @@ const register = async (req, res) => {
     }
 
     const existing = await conn.query('SELECT id FROM students WHERE email = $1 OR student_id = $2', [email, student_id]);
-    if (existing.length) {
+    if (existing.rows.length) {
       await conn.rollback();
       return res.status(409).json({ success: false, message: 'Student ID or email already registered' });
     }
 
     if (device_fingerprint) {
       const devCheck = await conn.query('SELECT id FROM device_registry WHERE device_fingerprint = $1', [device_fingerprint]);
-      if (devCheck.length) {
+      if (devCheck.rows.length) {
         await conn.rollback();
         return res.status(409).json({ success: false, message: 'This device is already registered to another account' });
       }
@@ -117,7 +117,7 @@ const login = async (req, res) => {
         return res.status(403).json({ success: false, message: 'This account is bound to a different device' });
       }
       const devReg = await pool.query('SELECT first_student_id FROM device_registry WHERE device_fingerprint = $1', [device_fingerprint]);
-      if (devReg.length && devReg[0].first_student_id !== student.id) {
+      if (devReg.rows.length && devReg.rows[0].first_student_id !== student.id) {
         return res.status(403).json({ success: false, message: 'This device is registered to another student account' });
       }
       if (!student.device_fingerprint) {

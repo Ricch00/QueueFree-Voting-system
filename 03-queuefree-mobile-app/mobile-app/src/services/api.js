@@ -2,16 +2,16 @@ import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
 // ─────────────────────────────────────────────────────────────────
-//  ⚠️  IMPORTANT: Change this to your computer's local IP address
-//  Found it with: ipconfig (Windows) or ifconfig (Mac/Linux)
-//  Use the address your phone or emulator can reach.
-//  Example: 'http://10.20.70.147:5000/api'
+//  API URL from environment variable or fallback to local backend
+//  For Android emulator, use 10.0.2.2
+//  For iOS simulator, use localhost
+//  For physical device on same WiFi, use computer's IP
 // ─────────────────────────────────────────────────────────────────
-const API_BASE = 'http://172.20.10.5:5000/api';
+const API_BASE = process.env.EXPO_PUBLIC_API_URL || 'http://10.0.2.2:5000/api';
 
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 30000,
+  timeout: 300000, // Increased to 5 minutes for large photo uploads
   headers: { 'Content-Type': 'application/json' },
 });
 

@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
 
-  const load = () => getDashboard().then(r => { setData(r.data); setLoading(false); }).catch(() => setLoading(false));
+  const load = () => getDashboard().then(r => { setData(r.data); setLoading(false); }).catch(err => { console.error('Dashboard load error:', err); setLoading(false); });
   useEffect(() => { load(); const t = setInterval(load, 15000); return () => clearInterval(t); }, []);
 
   if (loading) return <div className="loading-row"><div className="spinner" style={{ margin: '0 auto' }} /></div>;

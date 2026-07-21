@@ -8,10 +8,10 @@ const login = async (req, res) => {
     const { email, password } = req.body;
     if (!email || !password) return res.status(400).json({ success: false, message: 'Email and password required' });
     const rows = await pool.query('SELECT * FROM admins WHERE email = $1', [email]);
-    if (!rows.length || !await bcrypt.compare(password, rows[0].password)) {
+    if (!rows.rows.length || !await bcrypt.compare(password, rows.rows[0].password)) {
       return res.status(401).json({ success: false, message: 'Invalid credentials' });
     }
-    const admin = rows[0];
+    const admin = rows.rows[0];
     if (!admin.is_active) return res.status(403).json({ success: false, message: 'Account disabled' });
     await pool.query('UPDATE admins SET last_login = NOW() WHERE id = $1', [admin.id]);
     const token = jwt.sign({ id: admin.id, type: 'admin', role: admin.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
@@ -46,7 +46,7 @@ const createAdmin = async (req, res) => {
   try {
     const { name, email, password, role } = req.body;
     const ex = await pool.query('SELECT id FROM admins WHERE email = $1', [email]);
-    if (ex.length) return res.status(409).json({ success: false, message: 'Email already exists' });
+    if (ex.rows.length) return res.status(409).json({ success: false, message: 'Email already exists' });
     const hash = await bcrypt.hash(password, 12);
     const result = await pool.query('INSERT INTO admins (name, email, password, role) VALUES ($1, $2, $3, $4) RETURNING id', [name, email, hash, role || 'admin']);
     res.status(201).json({ success: true, message: 'Admin created', data: { id: result.rows[0].id } });

@@ -76,8 +76,8 @@ useEffect(() => {
 export function MonitoringPage() {
   const { id } = useParams(); const navigate = useNavigate();
   const [data, setData] = useState(null);
-  const load = () => getLiveMonitoring(id).then(r => setData(r.data)).catch(() => {});
-  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); }, [id]);
+  const load = useCallback(() => getLiveMonitoring(id).then(r => setData(r.data)).catch(() => {}), [id]);
+  useEffect(() => { load(); const t = setInterval(load, 5000); return () => clearInterval(t); }, [load]);
   if (!data) return <div className="loading-row"><div className="spinner" style={{ margin: '0 auto' }} /></div>;
   const { election, stats, votes_by_hour } = data;
   const chartData = {

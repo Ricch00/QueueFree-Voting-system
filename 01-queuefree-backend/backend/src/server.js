@@ -17,11 +17,11 @@ const io     = new Server(server, { cors: { origin: '*' } });
 
 // ── MIDDLEWARE ─────────────────────────────────────────────────────────────
 app.use(cors({ 
-  origin: ['http://localhost:3000'], 
+  origin: ['http://localhost:3000', 'http://10.50.117.69:3000', 'http://10.50.117.69:19006', 'http://10.50.117.69:8081', 'http://localhost:19006', 'http://localhost:8081'], 
   credentials: true 
 }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 // app.use(helmet({ 
 //   contentSecurityPolicy: false,
@@ -37,6 +37,8 @@ app.use(morgan('dev'));
 
 const limiter     = rateLimit({ windowMs: 15 * 60 * 1000, max: 300, trustProxy: true });
 const authLimiter = rateLimit({ windowMs: 15 * 60 * 1000, max: 20, trustProxy: true });
+// Exclude registration from rate limiting to allow photo uploads
+app.use('/api/student/register', (req, res, next) => next());
 app.use('/api/', limiter);
 app.use('/api/student/login',  authLimiter);
 app.use('/api/admin/login',    authLimiter);
@@ -109,6 +111,7 @@ server.on('error', (err) => {
   }
 });
 
+server.setTimeout(300000); // 5 minute server timeout for large uploads
 server.listen(PORT, () => {
   console.log(`\n🚀 QueueFree Server running on http://localhost:${PORT}`);
   console.log(`🌐 API: http://localhost:${PORT}/api`);

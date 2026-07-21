@@ -5,6 +5,7 @@
     "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
+    "owner": "Ricch00",
     "splash": {
       "resizeMode": "contain",
       "backgroundColor": "#1a56db"

@@ -29,18 +29,18 @@ const getAllStudents = async (req, res) => {
        FROM students s LEFT JOIN admins a ON s.verified_by = a.id
        ${where} ORDER BY s.created_at DESC LIMIT ${parseInt(limit)} OFFSET ${offset}`, params);
     const total = await pool.query(`SELECT COUNT(*) as count FROM students s ${where}`, params);
-    res.json({ success: true, data: students.map(s => formatStudent(s, req)), pagination: { total: total.rows[0].count, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total.rows[0].count / parseInt(limit)) } });
+    res.json({ success: true, data: students.rows.map(s => formatStudent(s, req)), pagination: { total: total.rows[0].count, page: parseInt(page), limit: parseInt(limit), pages: Math.ceil(total.rows[0].count / parseInt(limit)) } });
   } catch (err) { console.error(err); res.status(500).json({ success: false, message: 'Failed' }); }
 };
 
 const getStudent = async (req, res) => {
   try {
     const rows = await pool.query('SELECT s.*, a.name as verified_by_name FROM students s LEFT JOIN admins a ON s.verified_by = a.id WHERE s.id = $1', [req.params.id]);
-    if (!rows.length) return res.status(404).json({ success: false, message: 'Student not found' });
-    const student = formatStudent({ ...rows[0] }, req);
+    if (!rows.rows.length) return res.status(404).json({ success: false, message: 'Student not found' });
+    const student = formatStudent({ ...rows.rows[0] }, req);
     delete student.password;
     const voteHistory = await pool.query('SELECT e.title, e.academic_year, vr.voted_at FROM voter_records vr JOIN elections e ON vr.election_id = e.id WHERE vr.student_id = $1 ORDER BY vr.voted_at DESC', [req.params.id]);
-    student.vote_history = voteHistory;
+    student.vote_history = voteHistory.rows;
     res.json({ success: true, data: student });
   } catch (err) { res.status(500).json({ success: false, message: 'Failed' }); }
 };
@@ -58,8 +58,8 @@ const verifyStudent = async (req, res) => {
 const toggleStudentActive = async (req, res) => {
   try {
     const rows = await pool.query('SELECT is_active FROM students WHERE id = $1', [req.params.id]);
-    if (!rows.length) return res.status(404).json({ success: false, message: 'Not found' });
-    const newStatus = !rows[0].is_active;
+    if (!rows.rows.length) return res.status(404).json({ success: false, message: 'Not found' });
+    const newStatus = !rows.rows[0].is_active;
     await pool.query('UPDATE students SET is_active = $1 WHERE id = $2', [newStatus, req.params.id]);
     res.json({ success: true, message: `Student ${newStatus ? 'activated' : 'deactivated'}` });
   } catch (err) { res.status(500).json({ success: false, message: 'Failed' }); }

@@ -27,27 +27,27 @@ export const AuthProvider = ({ children }) => {
         localStorage.removeItem('admin_user');
         localStorage.removeItem('admin_token');
       }
-      getAdminProfile()
-        .then(r => {
-          const profile = normalizeResponse(r);
-          setAdmin(profile);
-          localStorage.setItem('admin_user', JSON.stringify(profile));
-        })
-        .catch(() => logout())
-        .finally(() => setLoading(false));
+      // Don't fetch profile on mount to avoid redirect loop
+      setLoading(false);
     } else {
       setLoading(false);
     }
   }, []);
 
   const login = async (email, password) => {
+    console.log('Login called with:', email);
     const res = await adminLogin({ email, password });
+    console.log('Login response:', res);
     const payload = normalizeResponse(res);
+    console.log('Normalized payload:', payload);
     const adminData = payload.admin || payload;
+    console.log('Admin data:', adminData);
+    console.log('Token:', payload.token);
     localStorage.setItem('admin_token', payload.token);
     localStorage.setItem('admin_user', JSON.stringify(adminData));
     setAdmin(adminData);
     toast.success(`Welcome, ${adminData.name}!`);
+    console.log('Login completed, admin state set');
     return adminData;
   };
 

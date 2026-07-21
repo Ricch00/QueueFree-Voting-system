@@ -48,7 +48,7 @@ const addCandidate = async (req, res) => {
     const { election_id, position_id, student_id, manifesto, nickname, sort_order, photo } = req.body;
     if (!election_id || !position_id || !student_id) return res.status(400).json({ success: false, message: 'election_id, position_id and student_id required' });
     const ex = await pool.query('SELECT id FROM candidates WHERE election_id=$1 AND position_id=$2 AND student_id=$3', [election_id, position_id, student_id]);
-    if (ex.length) return res.status(409).json({ success: false, message: 'Candidate already nominated for this position' });
+    if (ex.rows.length) return res.status(409).json({ success: false, message: 'Candidate already nominated for this position' });
     const r = await pool.query('INSERT INTO candidates (election_id, position_id, student_id, manifesto, nickname, sort_order) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id',
       [election_id, position_id, student_id, manifesto || null, nickname || null, sort_order || 0]);
     
