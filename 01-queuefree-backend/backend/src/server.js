@@ -17,7 +17,7 @@ const io     = new Server(server, { cors: { origin: '*' } });
 
 // ── MIDDLEWARE ─────────────────────────────────────────────────────────────
 app.use(cors({ 
-  origin: ['https://queue-free-frontend.vercel.app', 'http://localhost:3000'], 
+  origin: ['http://localhost:3000'], 
   credentials: true 
 }));
 app.use(express.json({ limit: '10mb' }));
@@ -55,10 +55,10 @@ io.on('connection', (socket) => {
 // Broadcast live vote counts every 5 seconds
 setInterval(async () => {
   try {
-    const [active] = await pool.query("SELECT id FROM elections WHERE status = 'active'");
+    const active = await pool.query("SELECT id FROM elections WHERE status = 'active'");
     for (const e of active) {
-      const [[stats]] = await pool.query('SELECT COUNT(*) as count FROM voter_records WHERE election_id = ?', [e.id]);
-      io.to(`election_${e.id}`).emit('vote_update', { election_id: e.id, votes_cast: stats.count, timestamp: new Date() });
+      const stats = await pool.query('SELECT COUNT(*) as count FROM voter_records WHERE election_id = $1', [e.id]);
+      io.to(`election_${e.id}`).emit('vote_update', { election_id: e.id, votes_cast: stats.rows[0].count, timestamp: new Date() });
     }
   } catch (_) {}
 }, 5000);
